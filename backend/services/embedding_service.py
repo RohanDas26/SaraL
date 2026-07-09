@@ -1,49 +1,69 @@
 """
-services/embedding_service.py — Local sentence-transformers wrapper.
+services/embedding_service.py — Local embedding service wrapper.
 Zero IBM quota cost. 384-dim vectors from all-MiniLM-L6-v2.
-Optimized with low PyTorch thread count and small batches for 512MB RAM free containers.
+Uses ChromaDB's DefaultEmbeddingFunction (ONNX C++ engine) to keep peak RAM well under 512MB on cloud containers.
 """
 
-from typing import Optional
+from typing import Optional, Any
 import gc
-from sentence_transformers import SentenceTransformer
 from backend.utils.logger import get_logger
 
 log = get_logger(__name__)
 
-# Limit PyTorch CPU threads so it doesn't allocate massive memory buffers or spike vCPU on 512MB containers
+# Limit PyTorch CPU threads just in case fallback is triggered
 try:
     import torch
     torch.set_num_threads(1)
 except Exception as exc:
     log.debug("Could not set torch thread count: %s", exc)
 
-_MODEL_NAME = "all-MiniLM-L6-v2"
-_model: Optional[SentenceTransformer] = None
+_embed_fn: Optional[Any] = None
+_model: Optional[Any] = None
 
 
-def get_embedding_model() -> SentenceTransformer:
-    global _model
-    if _model is None:
-        log.info("Loading embedding model %s ...", _MODEL_NAME)
-        _model = SentenceTransformer(_MODEL_NAME)
-        log.info("Embedding model ready.")
-    return _model
+def get_embedding_engine() -> Any:
+    global _embed_fn, _model
+    if _embed_fn is None and _model is None:
+        try:
+            log.info("Loading ONNX C++ embedding engine (DefaultEmbeddingFunction)...")
+            from chromadb.utils.embedding_functions import DefaultEmbeddingFunction
+            _embed_fn = DefaultEmbeddingFunction()
+            log.info("ONNX C++ embedding engine ready.")
+            return _embed_fn
+        except Exception as exc:
+            log.warning("ONNX embedding engine failed (%s), falling back to SentenceTransformer...", exc)
+            from sentence_transformers import SentenceTransformer
+            _model = SentenceTransformer("all-MiniLM-L6-v2")
+            log.info("SentenceTransformer embedding model ready.")
+            return _model
+    return _embed_fn if _embed_fn is not None else _model
 
 
 def embed_texts(texts: list[str]) -> list[list[float]]:
-    model = get_embedding_model()
-    log.debug("Starting encoding of %d texts with batch_size=16...", len(texts))
-    # batch_size=16 keeps peak RAM allocation well under 512MB limits on cloud containers
-    embeddings = model.encode(
-        texts,
-        batch_size=16,
-        show_progress_bar=False,
-        convert_to_numpy=True,
-        normalize_embeddings=True,
-    )
-    gc.collect()
-    return embeddings.tolist()
+    engine = get_embedding_engine()
+    log.debug("Starting encoding of %d texts...", len(texts))
+    
+    # Check if we are using ONNX DefaultEmbeddingFunction or SentenceTransformer
+    if _embed_fn is not None:
+        # DefaultEmbeddingFunction expects list[str] and returns list[list[float]] via C++ ONNX
+        embeddings = _embed_fn(texts)
+        if hasattr(embeddings, "tolist"):
+            embeddings = embeddings.tolist()
+        # Convert to standard float lists if numpy arrays
+        res = [list(map(float, vec)) for vec in embeddings]
+        gc.collect()
+        return res
+    else:
+        # Fallback to SentenceTransformer with ultra-small batch_size=8
+        embeddings = engine.encode(
+            texts,
+            batch_size=8,
+            show_progress_bar=False,
+            convert_to_numpy=True,
+            normalize_embeddings=True,
+        )
+        gc.collect()
+        return embeddings.tolist()
 
 
 def embed_query(query: str) -> list[float]:
