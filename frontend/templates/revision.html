@@ -1,0 +1,211 @@
+{% extends "base.html" %}
+{% block title %}Revision{% endblock %}
+
+{% block content %}
+<div class="studio-workspace-header">
+  <div class="studio-workspace-header__left">
+    <div class="studio-workspace-header__icon" style="background:rgba(234,179,8,0.15);color:#facc15;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+    </div>
+    <div>
+      <h1 class="studio-workspace-header__title">Revision & Exam Prep · High-Yield Synthesis</h1>
+      <p class="studio-workspace-header__desc">Transform lengthy documents into structured flashcard sets, rapid key-term notes, or ultra-dense exam cheat sheets.</p>
+    </div>
+  </div>
+  <div class="studio-workspace-header__right">
+    <span class="status-badge status-badge--active"><span class="pulse-dot"></span> watsonx.ai Llama 3.3</span>
+  </div>
+</div>
+
+<div class="page-body">
+
+  <!-- Controls -->
+  <div style="display:flex;gap:var(--space-4);align-items:flex-end;margin-bottom:var(--space-5);flex-wrap:wrap;">
+    <div class="form-group" style="margin:0;min-width:200px;">
+      <label class="form-label" for="revision-doc-select">Document</label>
+      <select class="select" id="revision-doc-select">
+        <option value="">— Select a document —</option>
+      </select>
+    </div>
+
+    <div class="form-group" style="margin:0;">
+      <div class="form-label">Mode</div>
+      <div style="display:flex;gap:var(--space-2);">
+        <span class="level-pill active" data-mode="flashcards">Flashcards</span>
+        <span class="level-pill" data-mode="quick_notes">Quick Notes</span>
+        <span class="level-pill" data-mode="exam_sheet">Exam Sheet</span>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" id="revision-btn">Generate</button>
+    <button class="btn btn-ghost" id="important-points-btn">Important Points</button>
+  </div>
+
+  <!-- Flashcards view -->
+  <div id="flashcards-view" style="display:none;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--space-4);">
+      <span id="flashcard-counter" class="text-sm text-muted">Card 1 of ?</span>
+      <div style="display:flex;gap:var(--space-2);">
+        <button class="btn btn-ghost btn-sm" id="fc-prev">Prev</button>
+        <button class="btn btn-ghost btn-sm" id="fc-next">Next</button>
+      </div>
+    </div>
+    <div class="flashcard" id="flashcard" title="Click to flip">
+      <div class="flashcard-inner">
+        <div class="flashcard-front" id="fc-front">—</div>
+        <div class="flashcard-back"  id="fc-back">—</div>
+      </div>
+    </div>
+    <p class="text-xs text-muted" style="margin-top:var(--space-2);text-align:center;">Click the card to reveal the answer</p>
+  </div>
+
+  <!-- Text result view (quick notes / exam sheet / important points) -->
+  <div class="result-block" id="text-result-block" style="display:none;">
+    <div class="result-block__header">
+      <span class="result-block__title" id="text-result-title">Result</span>
+      <div class="result-block__actions">
+        <button class="btn btn-ghost btn-sm" id="text-copy-btn">Copy</button>
+      </div>
+    </div>
+    <div class="result-block__body" id="text-result-output"></div>
+  </div>
+
+  <div id="revision-empty" style="padding:var(--space-6) 0;color:var(--color-text-muted);font-size:var(--font-size-sm);">
+    Select a document and mode, then click Generate.
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+  const docSel    = document.getElementById("revision-doc-select");
+  const revBtn    = document.getElementById("revision-btn");
+  const ipBtn     = document.getElementById("important-points-btn");
+  const modePills = document.querySelectorAll("[data-mode]");
+  const fcView    = document.getElementById("flashcards-view");
+  const textView  = document.getElementById("text-result-block");
+  const textOut   = document.getElementById("text-result-output");
+  const textTitle = document.getElementById("text-result-title");
+  const textCopy  = document.getElementById("text-copy-btn");
+  const emptyMsg  = document.getElementById("revision-empty");
+  const fcFront   = document.getElementById("fc-front");
+  const fcBack    = document.getElementById("fc-back");
+  const fcCounter = document.getElementById("flashcard-counter");
+  const fcCard    = document.getElementById("flashcard");
+  const fcPrev    = document.getElementById("fc-prev");
+  const fcNext    = document.getElementById("fc-next");
+
+  let cards = [];
+  let cardIdx = 0;
+  let lastText = "";
+
+  // Load docs
+  (async () => {
+    const { data } = await window.SaralAPI.Documents.list();
+    if (!data?.documents?.length) return;
+    data.documents.filter(d => d.status === "indexed").forEach((d) => {
+      docSel.appendChild(new Option(d.display_name, d.id));
+    });
+    const active = window.Saral.ActiveDoc.get();
+    if (active) docSel.value = active.id;
+  })();
+
+  // Mode selector
+  modePills.forEach((p) => {
+    p.addEventListener("click", () => {
+      modePills.forEach(x => x.classList.remove("active"));
+      p.classList.add("active");
+    });
+  });
+
+  function getMode() {
+    return document.querySelector("[data-mode].active")?.dataset.mode || "quick_notes";
+  }
+
+  function showLoading(msg) {
+    revBtn.disabled = true;
+    revBtn.innerHTML = '<div class="spinner spinner-sm"></div>';
+    window.Saral.showLoading(msg);
+  }
+  function hideLoading() {
+    revBtn.disabled = false;
+    revBtn.textContent = "Generate";
+    window.Saral.hideLoading();
+  }
+
+  // ── Generate ──────────────────────────────────────────────────────
+  revBtn.addEventListener("click", async () => {
+    const docId = docSel.value;
+    const mode  = getMode();
+    if (!docId) { window.Saral.showToast("Please select a document.", "warn"); return; }
+
+    showLoading("Generating revision material...");
+    const { data, error } = await window.SaralAPI.Features.revision(docId, mode);
+    hideLoading();
+
+    if (error) { window.Saral.showToast(error, "error"); return; }
+
+    emptyMsg.style.display = "none";
+
+    if (mode === "flashcards") {
+      cards = data.result;
+      cardIdx = 0;
+      renderFlashcard();
+      fcView.style.display = "";
+      textView.style.display = "none";
+    } else {
+      lastText = data.result;
+      textOut.innerHTML = window.Saral.renderMarkdown(lastText);
+      textTitle.textContent = mode === "quick_notes" ? "Quick Notes" : "Exam Cheat Sheet";
+      textView.style.display = "";
+      fcView.style.display = "none";
+    }
+
+    if (data.cached) window.Saral.showToast("Result from cache.", "info", 2000);
+  });
+
+  // ── Important Points ──────────────────────────────────────────────
+  ipBtn.addEventListener("click", async () => {
+    const docId = docSel.value;
+    if (!docId) { window.Saral.showToast("Please select a document.", "warn"); return; }
+
+    ipBtn.disabled = true;
+    ipBtn.innerHTML = '<div class="spinner spinner-sm"></div>';
+    window.Saral.showLoading("Extracting important points...");
+
+    const { data, error } = await window.SaralAPI.Features.importantPoints(docId);
+    ipBtn.disabled = false;
+    ipBtn.textContent = "Important Points";
+    window.Saral.hideLoading();
+
+    if (error) { window.Saral.showToast(error, "error"); return; }
+
+    lastText = data.result;
+    textOut.innerHTML = window.Saral.renderMarkdown(lastText);
+    textTitle.textContent = "Important Points";
+    textView.style.display = "";
+    fcView.style.display = "none";
+    emptyMsg.style.display = "none";
+  });
+
+  // ── Flashcard navigation ──────────────────────────────────────────
+  function renderFlashcard() {
+    if (!cards.length) return;
+    const c = cards[cardIdx];
+    fcFront.textContent  = c.front;
+    fcBack.textContent   = c.back;
+    fcCounter.textContent = `Card ${cardIdx + 1} of ${cards.length}`;
+    fcCard.classList.remove("flipped");
+  }
+  fcCard.addEventListener("click", () => fcCard.classList.toggle("flipped"));
+  fcPrev.addEventListener("click", () => { if (cardIdx > 0) { cardIdx--; renderFlashcard(); } });
+  fcNext.addEventListener("click", () => { if (cardIdx < cards.length - 1) { cardIdx++; renderFlashcard(); } });
+
+  textCopy.addEventListener("click", function () {
+    window.Saral.copyToClipboard(lastText, this);
+  });
+})();
+</script>
+{% endblock %}

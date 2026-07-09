@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% block title %}Summary{% endblock %}
+
+{% block content %}
+<div class="studio-workspace-header">
+  <div class="studio-workspace-header__left">
+    <div class="studio-workspace-header__icon" style="background:rgba(34,197,94,0.15);color:#4ade80;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+    </div>
+    <div>
+      <h1 class="studio-workspace-header__title">Executive Summary Engine · Document Synthesis</h1>
+      <p class="studio-workspace-header__desc">Synthesize multi-page PDFs, DOCX files, or transcripts into structured summaries, bullet lists, or 1-minute exam notes.</p>
+    </div>
+  </div>
+  <div class="studio-workspace-header__right">
+    <span class="status-badge status-badge--active"><span class="pulse-dot"></span> watsonx.ai Llama 3.3</span>
+  </div>
+</div>
+
+<div class="page-body">
+
+  <!-- Controls -->
+  <div style="display:flex;gap:var(--space-4);align-items:flex-end;margin-bottom:var(--space-5);flex-wrap:wrap;">
+    <div class="form-group" style="margin:0;flex:1;min-width:200px;">
+      <label class="form-label" for="summary-doc-select">Document</label>
+      <select class="select" id="summary-doc-select">
+        <option value="">— Select a document —</option>
+      </select>
+    </div>
+
+    <div class="form-group" style="margin:0;">
+      <div class="form-label">Summary Type</div>
+      <div style="display:flex;gap:var(--space-2);flex-wrap:wrap;">
+        <label class="level-pill active" style="cursor:pointer;">
+          <input type="radio" name="sum-type" value="short" style="display:none;" checked> Short
+        </label>
+        <label class="level-pill" style="cursor:pointer;">
+          <input type="radio" name="sum-type" value="bullet" style="display:none;"> Bullet Points
+        </label>
+        <label class="level-pill" style="cursor:pointer;">
+          <input type="radio" name="sum-type" value="detailed" style="display:none;"> Detailed
+        </label>
+        <label class="level-pill" style="cursor:pointer;">
+          <input type="radio" name="sum-type" value="one_minute" style="display:none;"> One-minute
+        </label>
+        <label class="level-pill" style="cursor:pointer;">
+          <input type="radio" name="sum-type" value="exam_notes" style="display:none;"> Exam Notes
+        </label>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" id="summary-btn">Generate Summary</button>
+  </div>
+
+  <!-- Result -->
+  <div class="result-block" id="summary-result-block" style="display:none;">
+    <div class="result-block__header">
+      <span class="result-block__title" id="summary-result-title">Summary</span>
+      <div class="result-block__actions">
+        <button class="btn btn-ghost btn-sm" id="summary-copy-btn">Copy</button>
+      </div>
+    </div>
+    <div class="result-block__body" id="summary-output"></div>
+  </div>
+
+  <div id="summary-empty" style="padding:var(--space-6) 0;color:var(--color-text-muted);font-size:var(--font-size-sm);">
+    Select a document and summary type, then click Generate.
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+  const docSel       = document.getElementById("summary-doc-select");
+  const btn          = document.getElementById("summary-btn");
+  const output       = document.getElementById("summary-output");
+  const resultBlock  = document.getElementById("summary-result-block");
+  const resultTitle  = document.getElementById("summary-result-title");
+  const emptyMsg     = document.getElementById("summary-empty");
+  const copyBtn      = document.getElementById("summary-copy-btn");
+
+  let lastResult = "";
+
+  // Populate document dropdown
+  async function loadDocs() {
+    const { data } = await window.SaralAPI.Documents.list();
+    if (!data?.documents?.length) return;
+    data.documents.filter(d => d.status === "indexed").forEach((d) => {
+      const opt = new Option(d.display_name, d.id);
+      docSel.appendChild(opt);
+    });
+    // Pre-select active doc
+    const active = window.Saral.ActiveDoc.get();
+    if (active) docSel.value = active.id;
+  }
+
+  // Type selector highlight
+  document.querySelectorAll("label.level-pill").forEach((lbl) => {
+    lbl.addEventListener("click", () => {
+      document.querySelectorAll("label.level-pill").forEach(x => x.classList.remove("active"));
+      lbl.classList.add("active");
+    });
+  });
+
+  btn.addEventListener("click", async () => {
+    const docId = docSel.value;
+    const type  = document.querySelector('input[name="sum-type"]:checked')?.value || "short";
+    if (!docId) { window.Saral.showToast("Please select a document.", "warn"); return; }
+
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner spinner-sm"></div>';
+    window.Saral.showLoading("Generating summary...");
+
+    const { data, error } = await window.SaralAPI.Features.summary(docId, type);
+    btn.disabled = false;
+    btn.textContent = "Generate Summary";
+    window.Saral.hideLoading();
+
+    if (error) { window.Saral.showToast(error, "error"); return; }
+
+    lastResult = data.result;
+    output.innerHTML = window.Saral.renderMarkdown(lastResult);
+    resultTitle.textContent = type.replace("_", " ").replace(/\b\w/g, c => c.toUpperCase()) + " Summary";
+    resultBlock.style.display = "";
+    emptyMsg.style.display = "none";
+
+    if (data.cached) window.Saral.showToast("Result from cache.", "info", 2000);
+  });
+
+  copyBtn.addEventListener("click", function () {
+    window.Saral.copyToClipboard(lastResult, this);
+  });
+
+  // Guard: DOMContentLoaded may already have fired when extra_js scripts run.
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", loadDocs);
+  } else {
+    loadDocs();
+  }
+})();
+</script>
+{% endblock %}

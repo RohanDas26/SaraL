@@ -1,0 +1,50 @@
+# ─────────────────────────────────────────────────────────────────
+# .gitignore — Saral AI Educational Assistant
+# ─────────────────────────────────────────────────────────────────
+
+# ── Environment & Secrets ─────────────────────────────────────────
+.env
+
+# ── Python ────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+.Python
+venv/
+.venv/
+env/
+pip-log.txt
+pip-delete-this-directory.txt
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# ── Runtime data (auto-created by Saral at startup) ───────────────
+instance/
+*.db
+uploads/
+vectordb/
+
+# ── Dev artifacts & Temporary files ───────────────────────────────
+flask_stdout.txt
+flask_stderr.txt
+*.log
+*.tmp
+
+# ── ML model cache (downloaded on first run) ──────────────────────
+.cache/
+models/
+
+# ── OS ────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── IDE ───────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo

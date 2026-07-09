@@ -1,0 +1,32 @@
+# ─────────────────────────────────────────────────────────────────
+# requirements.txt — Saral AI Educational Assistant
+# Python 3.10 | Tested on Windows (local) and Linux (Render/Cloud)
+# ─────────────────────────────────────────────────────────────────
+
+# ── Web framework ──────────────────────────────────────────────────
+flask==3.0.3
+flask-cors==4.0.1
+flask-limiter==3.7.0
+python-dotenv==1.0.1
+werkzeug==3.0.3
+
+# ── Production WSGI server (required for Render / IBM Cloud deployment)
+gunicorn==21.2.0
+
+# ── IBM watsonx.ai SDK ─────────────────────────────────────────────
+# 1.3.0+ required for au-syd region support and improved URL validation
+ibm-watsonx-ai>=1.3.0
+
+# ── Local embeddings (sentence-transformers + torch)
+# Pinned for Python 3.10 + torch 2.1.x compatibility
+sentence-transformers==2.2.2
+transformers==4.35.2
+torch==2.1.2
+
+# ── Vector database ────────────────────────────────────────────────
+chromadb==0.5.5
+
+# ── Document parsing ───────────────────────────────────────────────
+pymupdf==1.24.9
+python-docx==1.1.2
+chardet==5.2.0

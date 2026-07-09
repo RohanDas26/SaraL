@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Saral — AI-powered educational assistant. Upload study material and use IBM watsonx.ai to simplify concepts, generate summaries, create quizzes, explain terms, and prepare revision notes.">
+  <title>{% block title %}Saral{% endblock %} — Making Learning Simpler</title>
+
+  <!-- Favicon: inline SVG so no extra file needed -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23FF6B35'/><text y='.9em' font-size='72' x='50%25' text-anchor='middle' dominant-baseline='hanging' font-family='sans-serif' fill='white'>S</text></svg>">
+
+  <!-- Google Fonts: Outfit, Plus Jakarta Sans, and IBM Plex Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/layout.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+<div class="app-shell">
+
+  <!-- ── Studio Navigation Header ───────────────────────────────────── -->
+  <header class="topnav studio-header">
+    <div class="studio-header__left">
+      <a href="/" class="topnav__logo" aria-label="Saral home">
+        <span class="topnav__logo-text">Saral</span>
+        <span class="topnav__logo-tag">Making Learning Simpler</span>
+      </a>
+      <button class="sidebar-collapse-toggle" id="sidebar-collapse-btn" title="Toggle Knowledge Dock">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+    </div>
+
+    <!-- Center Studio Workflow Dock (Classy minimal text, no emojis) -->
+    <nav class="studio-pill-bar">
+      <a href="/"         class="studio-pill {% if request.path == '/'         %}active{% endif %}">Overview</a>
+      <a href="/chat"     class="studio-pill {% if request.path == '/chat'     %}active{% endif %}">Ask Saral</a>
+      <a href="/simplify" class="studio-pill {% if request.path == '/simplify' %}active{% endif %}">Simplify</a>
+      <a href="/summary"  class="studio-pill {% if request.path == '/summary'  %}active{% endif %}">Summary</a>
+      <a href="/quiz"     class="studio-pill {% if request.path == '/quiz'     %}active{% endif %}">Quiz</a>
+      <a href="/explain"  class="studio-pill {% if request.path == '/explain'  %}active{% endif %}">Terms</a>
+      <a href="/revision" class="studio-pill {% if request.path == '/revision' %}active{% endif %}">Revision</a>
+    </nav>
+
+    <div class="studio-header__right">
+      <!-- Learning Level directly in header -->
+      <div class="level-selector level-selector--header" id="global-level-selector" title="Select your learning level">
+        <span class="level-pill" data-level="beginner">Beginner</span>
+        <span class="level-pill" data-level="intermediate">Intermediate</span>
+        <span class="level-pill" data-level="advanced">Advanced</span>
+      </div>
+
+      <div class="header-ibm-badge" title="Powered by IBM watsonx.ai & Llama 3.3">
+        <span class="pulse-dot"></span>
+        <span class="header-ibm-text">watsonx.ai</span>
+      </div>
+
+      <a href="/settings" class="studio-settings-btn {% if request.path == '/settings' %}active{% endif %}" title="Settings">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </a>
+    </div>
+  </header>
+
+  <!-- ── Studio Workspace Architecture ──────────────────────────────── -->
+  <div class="workspace studio-workspace">
+
+    <!-- Left Knowledge Base & Document Library Dock (Dedicated purely to study materials) -->
+    <aside class="sidebar library-dock" id="sidebar">
+      <div class="library-dock__header">
+        <div class="library-dock__title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--color-saffron)"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+          <span>Knowledge Base</span>
+        </div>
+        <button class="btn-icon-tiny" id="library-minimize-btn" title="Hide Library Drawer">◀</button>
+      </div>
+
+      <div class="library-dock__active-status">
+        <div class="sidebar__label" style="margin-bottom:4px;">Active Document</div>
+        <div class="active-doc-pill">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:#38bdf8;flex-shrink:0;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          <span id="active-doc-display" class="active-doc-name">None selected</span>
+        </div>
+      </div>
+
+      <div class="sidebar__section sidebar__section--docs">
+        <div class="sidebar__label" style="display:flex;justify-content:space-between;align-items:center;">
+          <span>Uploaded Files</span>
+          <span id="doc-count-badge" style="font-size:10px;color:var(--color-text-light);"></span>
+        </div>
+        <div id="sidebar-docs" class="sidebar-docs-list">
+          <div class="empty-state" style="padding:20px 10px;text-align:center;">
+            <p class="text-xs text-muted">No study material uploaded yet.</p>
+          </div>
+        </div>
+        <button class="btn btn-primary btn-sm btn-full" style="margin-top:12px;" id="sidebar-upload-btn">
+          + Upload Document
+        </button>
+        <input type="file" id="global-upload-input" accept=".pdf,.docx,.txt" style="display:none;">
+      </div>
+
+      <!-- Optional context tools like clear session -->
+      <div class="library-dock__extra">
+        {% block right_panel_extra %}{% endblock %}
+      </div>
+
+      <div class="library-dock__footer">
+        <div class="library-dock__ibm-card">
+          <div style="font-weight:700;color:#ffffff;font-size:11px;margin-bottom:2px;display:flex;align-items:center;gap:6px;">
+            <span style="background:#0f62fe;color:#fff;padding:1px 5px;border-radius:4px;font-size:9px;">IBM</span>
+            <span>IBM Bob Project</span>
+          </div>
+          <div style="color:var(--color-text-muted);font-size:10px;">
+            Powered by <strong>IBM watsonx.ai</strong><br>
+            <span style="font-family:var(--font-mono);opacity:0.8;">meta-llama/llama-3-3-70b</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Studio Canvas (Full wide screen width, no right panel!) -->
+    <main class="main-content studio-main" id="main-content">
+      {% block content %}{% endblock %}
+    </main>
+
+  </div><!-- /workspace -->
+
+</div><!-- /app-shell -->
+
+<!-- AI Loading overlay -->
+<div class="loading-overlay" id="loading-overlay">
+  <div class="ai-orb-loader">
+    <div class="ai-orb-ring ai-orb-ring--1"></div>
+    <div class="ai-orb-ring ai-orb-ring--2"></div>
+    <div class="ai-orb-ring ai-orb-ring--3"></div>
+    <div class="ai-orb-core">
+      <svg width="18" height="18" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="6" fill="#ffffff"/><text x="16" y="21" text-anchor="middle" font-family="sans-serif" font-size="13" font-weight="800" fill="#0f62fe">ibm</text></svg>
+    </div>
+  </div>
+  <p id="loading-text-main">Thinking & Generating with AI...</p>
+  <div class="loading-sub">Powered by IBM watsonx.ai · meta-llama/llama-3-3-70b-instruct</div>
+</div>
+
+<!-- Scripts — utils and api must be first -->
+<script src="{{ url_for('static', filename='js/utils.js') }}"></script>
+<script src="{{ url_for('static', filename='js/api.js') }}"></script>
+{% block extra_js %}{% endblock %}
+
+<script>
+// ── Sidebar document list ─────────────────────────────────────────────
+async function refreshDocumentList() {
+  const container = document.getElementById("sidebar-docs");
+  if (!container) return;
+
+  const { data, error } = await window.SaralAPI.Documents.list();
+  if (error || !data?.documents?.length) return;
+
+  container.innerHTML = "";
+  const activeDoc = window.Saral.ActiveDoc.get();
+
+  data.documents.forEach((doc) => {
+    const item = document.createElement("div");
+    item.className = "sidebar__item" + (activeDoc?.id === doc.id ? " active" : "");
+    item.dataset.docId = doc.id;
+    item.title = doc.display_name;
+
+    const statusColor = {
+      indexed:    "var(--color-success)",
+      processing: "var(--color-warn)",
+      error:      "var(--color-error)",
+      pending:    "var(--color-text-light)",
+    }[doc.status] || "var(--color-text-light)";
+
+    item.innerHTML = `
+      <span style="width:6px;height:6px;border-radius:50%;background:${statusColor};flex-shrink:0;display:inline-block;"></span>
+      <span class="sidebar__item-name">${escSidebar(doc.display_name)}</span>
+      <span class="sidebar__item-badge">${doc.file_type.toUpperCase()}</span>
+    `;
+    item.addEventListener("click", () => {
+      window.Saral.ActiveDoc.set(doc);
+      document.querySelectorAll(".sidebar__item").forEach(el => el.classList.remove("active"));
+      item.classList.add("active");
+      const display = document.getElementById("active-doc-display");
+      if (display) display.textContent = doc.display_name;
+    });
+
+    container.appendChild(item);
+  });
+
+  // Set active doc display
+  if (activeDoc) {
+    const display = document.getElementById("active-doc-display");
+    if (display) display.textContent = activeDoc.display_name;
+  }
+}
+
+function escSidebar(t) {
+  return t.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
+// ── Learning level selector ────────────────────────────────────────────
+function initLevelSelector() {
+  const selector = document.getElementById("global-level-selector");
+  if (!selector) return;
+
+  const current = window.Saral.LearningLevel.get();
+  selector.querySelectorAll(".level-pill").forEach((pill) => {
+    if (pill.dataset.level === current) pill.classList.add("active");
+    pill.addEventListener("click", () => {
+      selector.querySelectorAll(".level-pill").forEach(p => p.classList.remove("active"));
+      pill.classList.add("active");
+      window.Saral.LearningLevel.set(pill.dataset.level);
+      window.SaralAPI.Settings.update({ learning_level: pill.dataset.level });
+    });
+  });
+}
+
+// ── Sidebar upload button ──────────────────────────────────────────────
+const sidebarUploadBtn = document.getElementById("sidebar-upload-btn");
+if (sidebarUploadBtn) {
+  sidebarUploadBtn.addEventListener("click", () => {
+    const inp = document.getElementById("global-upload-input") || document.getElementById("upload-input");
+    if (inp) inp.click();
+  });
+}
+
+// Init on load
+document.addEventListener("DOMContentLoaded", () => {
+  refreshDocumentList();
+  initLevelSelector();
+});
+
+window.refreshDocumentList = refreshDocumentList;
+</script>
+
+</body>
+</html>

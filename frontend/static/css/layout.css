@@ -1,0 +1,415 @@
+/*
+ * layout.css — Application shell: topnav, sidebar, main workspace
+ * Saral · Making Learning Simpler
+ */
+
+/* ── App shell ────────────────────────────────────────────────────────── */
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ── Top Navigation (Glassmorphic Studio Header) ─────────────────────── */
+.topnav.studio-header {
+  height: var(--topnav-height);
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--space-6);
+  flex-shrink: 0;
+  z-index: 1000;
+  position: relative;
+  box-shadow: 0 1px 12px rgba(0, 0, 0, 0.03);
+}
+
+.studio-header__left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.topnav__logo {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  text-decoration: none;
+}
+.topnav__logo-text {
+  font-family: var(--font-family);
+  font-size: 22px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #0f62fe 0%, #38bdf8 50%, #ff7a00 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: -0.03em;
+  filter: drop-shadow(0 2px 8px rgba(15, 98, 254, 0.15));
+}
+.topnav__logo-tag {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  display: none;
+}
+@media (min-width: 1100px) {
+  .topnav__logo-tag { display: inline; }
+}
+
+.sidebar-collapse-toggle {
+  background: #f3f4f6;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  color: var(--color-text-muted);
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.sidebar-collapse-toggle:hover {
+  background: #e5e7eb;
+  color: #111827;
+  transform: scale(1.05);
+}
+
+/* ── Center Studio Pill Dock ────────────────────────────────────────── */
+.studio-pill-bar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #f3f4f6;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  padding: 4px 6px;
+  border-radius: 9999px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.studio-pill {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  padding: 6px 14px;
+  border-radius: 9999px;
+  text-decoration: none;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid transparent;
+}
+.studio-pill:hover {
+  color: #111827;
+  background: rgba(0, 0, 0, 0.04);
+  transform: translateY(-1px);
+  text-decoration: none;
+}
+.studio-pill.active {
+  color: #111827;
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.12);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+  font-weight: 700;
+}
+
+/* ── Right Header Controls ──────────────────────────────────────────── */
+.studio-header__right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.level-selector--header {
+  display: flex;
+  background: #f3f4f6;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 9999px;
+  padding: 3px;
+  gap: 2px;
+}
+.level-selector--header .level-pill {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+.level-selector--header .level-pill:hover {
+  color: #111827;
+}
+.level-selector--header .level-pill.active {
+  background: #111827;
+  color: #ffffff;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.header-ibm-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #f3f4f6;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  padding: 5px 12px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #0f62fe;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+}
+.header-ibm-text {
+  font-family: var(--font-mono);
+}
+
+.studio-settings-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  font-size: 16px;
+  transition: all 0.2s;
+}
+.studio-settings-btn:hover, .studio-settings-btn.active {
+  background: rgba(255, 122, 0, 0.18);
+  border-color: rgba(255, 122, 0, 0.4);
+  transform: rotate(30deg);
+}
+
+/* ── Studio Workspace & Library Dock ─────────────────────────────────── */
+.workspace.studio-workspace {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+.sidebar.library-dock {
+  width: 280px;
+  background: #ffffff;
+  border-right: 1px solid rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  overflow-y: auto;
+  transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s ease;
+  z-index: 100;
+  box-shadow: 2px 0 12px rgba(0, 0, 0, 0.02);
+}
+.sidebar.library-dock.collapsed {
+  width: 0;
+  padding: 0;
+  border-right: none;
+  overflow: hidden;
+}
+
+.library-dock__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px var(--space-4) 12px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+.library-dock__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #111827;
+  letter-spacing: -0.01em;
+}
+.btn-icon-tiny {
+  background: #f3f4f6;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  color: var(--color-text-muted);
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.btn-icon-tiny:hover {
+  background: #e5e7eb;
+  color: #111827;
+}
+
+.library-dock__active-status {
+  padding: 14px var(--space-4);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  background: #f9fafb;
+}
+.active-doc-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #ffffff;
+  border: 1px solid #ff7a00;
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #111827;
+  box-shadow: 0 2px 8px rgba(255, 122, 0, 0.08);
+}
+.active-doc-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #111827;
+}
+
+.sidebar__section--docs {
+  padding: 16px var(--space-4);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.sidebar-docs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.library-dock__extra {
+  padding: 0 var(--space-4) 12px;
+}
+
+.library-dock__footer {
+  padding: 14px var(--space-4);
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  background: #f9fafb;
+}
+.library-dock__ibm-card {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 10px;
+  padding: 10px 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+/* ── Main Studio Area (Wide, fluid, spatial) ─────────────────────────── */
+.main-content.studio-main {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  background: transparent;
+}
+
+/* ── Classy Studio Workspace Header (Clean, crisp, no boxiness) ───────── */
+.studio-workspace-header {
+  padding: 22px var(--space-6) 18px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-shrink: 0;
+}
+
+.studio-workspace-header__left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.studio-workspace-header__icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+  line-height: 1 !important;
+  overflow: hidden !important;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  background: #ffffff;
+  color: #0f62fe;
+}
+.studio-workspace-header__icon svg {
+  display: block;
+  margin: auto;
+  flex-shrink: 0;
+}
+
+.studio-workspace-header__title {
+  font-size: 19px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 3px 0;
+  letter-spacing: -0.02em;
+}
+
+.studio-workspace-header__desc {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  margin: 0;
+  max-width: 680px;
+  line-height: 1.45;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: #f3f4f6;
+  color: #4b5563;
+}
+.status-badge--active {
+  border-color: rgba(15, 98, 254, 0.3);
+  color: #0f62fe;
+  background: rgba(15, 98, 254, 0.08);
+}
+
+.right-panel__label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-text-light);
+  margin-bottom: var(--space-3);
+}
+
+/* ── Responsive: hide sidebars on smaller screens ──────────────────────── */
+@media (max-width: 1100px) {
+  .right-panel { display: none; }
+}
+@media (max-width: 768px) {
+  .sidebar { display: none; }
+  .page-body { padding: var(--space-4); }
+  .studio-workspace-header { flex-direction: column; align-items: flex-start; }
+}

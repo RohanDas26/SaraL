@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block title %}Explain Term{% endblock %}
+
+{% block content %}
+<div class="studio-workspace-header">
+  <div class="studio-workspace-header__left">
+    <div class="studio-workspace-header__icon" style="background:rgba(168,85,247,0.15);color:#c084fc;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+    </div>
+    <div>
+      <h1 class="studio-workspace-header__title">Term Explainer · Conceptual Deep Dive</h1>
+      <p class="studio-workspace-header__desc">Retrieve crystal-clear definitions, practical examples, and intuitive real-world analogies across your scientific and academic vocabulary.</p>
+    </div>
+  </div>
+  <div class="studio-workspace-header__right">
+    <span class="status-badge status-badge--active"><span class="pulse-dot"></span> watsonx.ai Llama 3.3</span>
+  </div>
+</div>
+
+<div class="page-body">
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-5);">
+
+    <!-- Input -->
+    <div>
+      <div class="form-group">
+        <label class="form-label" for="explain-term">Term or Concept</label>
+        <input class="input" type="text" id="explain-term"
+               placeholder="e.g., Neural Network, Photosynthesis, Derivatives...">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="explain-doc-select">Context Document (optional)</label>
+        <select class="select" id="explain-doc-select">
+          <option value="">— None (general explanation) —</option>
+        </select>
+        <div class="form-hint">If selected, Saral uses your document as context for a more accurate explanation.</div>
+      </div>
+
+      <button class="btn btn-primary" id="explain-btn">Explain</button>
+    </div>
+
+    <!-- Output -->
+    <div>
+      <div class="result-block" id="explain-result-block" style="display:none;">
+        <div class="result-block__header">
+          <span class="result-block__title" id="explain-result-title">Explanation</span>
+          <div class="result-block__actions">
+            <button class="btn btn-ghost btn-sm" id="explain-copy-btn">Copy</button>
+          </div>
+        </div>
+        <div class="result-block__body" id="explain-output"></div>
+      </div>
+      <div id="explain-empty" style="padding:var(--space-6) 0;color:var(--color-text-muted);font-size:var(--font-size-sm);">
+        Your explanation will appear here.
+      </div>
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+  const termInput  = document.getElementById("explain-term");
+  const docSel     = document.getElementById("explain-doc-select");
+  const btn        = document.getElementById("explain-btn");
+  const output     = document.getElementById("explain-output");
+  const resultBlock = document.getElementById("explain-result-block");
+  const resultTitle = document.getElementById("explain-result-title");
+  const emptyMsg   = document.getElementById("explain-empty");
+  const copyBtn    = document.getElementById("explain-copy-btn");
+
+  let lastResult = "";
+
+  // Load docs
+  (async () => {
+    const { data } = await window.SaralAPI.Documents.list();
+    if (!data?.documents?.length) return;
+    data.documents.filter(d => d.status === "indexed").forEach((d) => {
+      docSel.appendChild(new Option(d.display_name, d.id));
+    });
+    const active = window.Saral.ActiveDoc.get();
+    if (active) docSel.value = active.id;
+  })();
+
+  // Enter key support
+  termInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") btn.click();
+  });
+
+  btn.addEventListener("click", async () => {
+    const term  = termInput.value.trim();
+    const docId = docSel.value || null;
+    if (!term) { window.Saral.showToast("Please enter a term to explain.", "warn"); return; }
+
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner spinner-sm"></div>';
+    window.Saral.showLoading("Explaining term...");
+
+    const { data, error } = await window.SaralAPI.Features.explain(term, docId);
+    btn.disabled = false;
+    btn.textContent = "Explain";
+    window.Saral.hideLoading();
+
+    if (error) { window.Saral.showToast(error, "error"); return; }
+
+    lastResult = data.result;
+    output.innerHTML = window.Saral.renderMarkdown(lastResult);
+    resultTitle.textContent = `Explanation: ${term}`;
+    resultBlock.style.display = "";
+    emptyMsg.style.display = "none";
+
+    if (data.cached) window.Saral.showToast("Result from cache.", "info", 2000);
+  });
+
+  copyBtn.addEventListener("click", function () {
+    window.Saral.copyToClipboard(lastResult, this);
+  });
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block title %}Quiz{% endblock %}
+
+{% block content %}
+<div class="studio-workspace-header">
+  <div class="studio-workspace-header__left">
+    <div class="studio-workspace-header__icon" style="background:rgba(239,68,68,0.15);color:#f87171;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+    </div>
+    <div>
+      <h1 class="studio-workspace-header__title">Adaptive Quiz Studio · Knowledge Verification</h1>
+      <p class="studio-workspace-header__desc">Auto-generate rigorous multiple-choice, true/false, and conceptual assessment questions grounded in your document chunks.</p>
+    </div>
+  </div>
+  <div class="studio-workspace-header__right">
+    <span class="status-badge status-badge--active"><span class="pulse-dot"></span> watsonx.ai Llama 3.3</span>
+  </div>
+</div>
+
+<div class="page-body">
+
+  <!-- Quiz Configuration -->
+  <div id="quiz-config">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:var(--space-4);margin-bottom:var(--space-5);">
+
+      <div class="form-group" style="margin:0;">
+        <label class="form-label" for="quiz-doc-select">Document</label>
+        <select class="select" id="quiz-doc-select">
+          <option value="">— Select a document —</option>
+        </select>
+      </div>
+
+      <div class="form-group" style="margin:0;">
+        <label class="form-label" for="quiz-type-select">Question Type</label>
+        <select class="select" id="quiz-type-select">
+          <option value="mcq">Multiple Choice (MCQ)</option>
+          <option value="true_false">True / False</option>
+          <option value="short">Short Answer</option>
+          <option value="long">Long Answer</option>
+        </select>
+      </div>
+
+      <div class="form-group" style="margin:0;">
+        <label class="form-label" for="quiz-difficulty-select">Difficulty</label>
+        <select class="select" id="quiz-difficulty-select">
+          <option value="easy">Easy</option>
+          <option value="medium" selected>Medium</option>
+          <option value="hard">Hard</option>
+        </select>
+      </div>
+
+    </div>
+
+    <div style="display:flex;gap:var(--space-4);align-items:flex-end;margin-bottom:var(--space-5);">
+      <div class="form-group" style="margin:0;">
+        <label class="form-label" for="quiz-count">Number of Questions</label>
+        <input class="input" type="number" id="quiz-count" min="1" max="20" value="5" style="width:100px;">
+      </div>
+      <button class="btn btn-primary" id="quiz-generate-btn">Generate Quiz</button>
+    </div>
+  </div>
+
+  <!-- Quiz Area -->
+  <div id="quiz-area" style="display:none;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--space-4);">
+      <div>
+        <strong id="quiz-progress-text">Question 1 of 5</strong>
+        <span style="margin-left:var(--space-3);font-size:var(--font-size-sm);color:var(--color-text-muted);">
+          Score: <span id="quiz-score">0</span> / <span id="quiz-attempted">0</span>
+        </span>
+      </div>
+      <button class="btn btn-ghost btn-sm" id="quiz-restart-btn">New Quiz</button>
+    </div>
+
+    <div class="progress" style="margin-bottom:var(--space-5);">
+      <div class="progress-bar" id="quiz-progress-bar" style="width:0%"></div>
+    </div>
+
+    <!-- Question card -->
+    <div class="quiz-question" id="quiz-question-card">
+      <div class="quiz-question__text" id="quiz-question-text"></div>
+      <div class="quiz-options" id="quiz-options"></div>
+      <!-- Short/Long answer input -->
+      <textarea class="textarea" id="quiz-answer-input" rows="4"
+                placeholder="Type your answer here..."
+                style="display:none;margin-top:var(--space-3);"></textarea>
+    </div>
+
+    <!-- Explanation block -->
+    <div id="quiz-explanation" class="alert alert-info" style="display:none;margin-top:var(--space-3);"></div>
+
+    <!-- Navigation -->
+    <div style="display:flex;gap:var(--space-3);margin-top:var(--space-4);">
+      <button class="btn btn-ghost" id="quiz-show-answer-btn">Show Answer</button>
+      <button class="btn btn-secondary" id="quiz-next-btn" style="margin-left:auto;">Next</button>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/quiz.js') }}"></script>
+{% endblock %}

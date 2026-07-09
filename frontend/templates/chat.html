@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Ask Saral{% endblock %}
+
+{% block content %}
+<div class="studio-workspace-header">
+  <div class="studio-workspace-header__left">
+    <div class="studio-workspace-header__icon" style="background:rgba(15,98,254,0.15);color:#38bdf8;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    </div>
+    <div>
+      <h1 class="studio-workspace-header__title">Ask Saral · Document Intelligence</h1>
+      <p class="studio-workspace-header__desc">Ask any question across your study material. Grounded in your uploaded context via high-precision RAG.</p>
+    </div>
+  </div>
+  <div class="studio-workspace-header__right">
+    <span class="status-badge status-badge--active"><span class="pulse-dot"></span> IBM watsonx.ai Active</span>
+  </div>
+</div>
+
+<!-- Chat area -->
+<div id="chat-area" class="chat-area"
+     style="padding: var(--space-5) var(--space-6); flex: 1; overflow-y: auto;">
+</div>
+
+<!-- Input bar -->
+<form id="chat-form" class="chat-input-bar">
+  <textarea
+    id="chat-input"
+    class="chat-input"
+    placeholder="Ask a question about your documents... (Enter to send, Shift+Enter for newline)"
+    rows="1"
+    autocomplete="off"
+  ></textarea>
+  <button type="submit" class="btn btn-primary" id="chat-submit-btn">Send</button>
+</form>
+{% endblock %}
+
+{% block right_panel_extra %}
+<div class="sidebar__section" style="margin-top:12px;">
+  <div class="sidebar__label">Session Control</div>
+  <button class="btn btn-ghost btn-sm btn-full" id="clear-history-btn" style="border:1px solid rgba(255,255,255,0.08);">Clear Chat History</button>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+{% endblock %}

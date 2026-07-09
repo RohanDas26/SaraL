@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}500 — Server Error{% endblock %}
+
+{% block content %}
+<div class="error-page">
+  <div class="error-page__code">500</div>
+  <h1 class="error-page__title">Something Went Wrong</h1>
+  <p class="error-page__desc">
+    An unexpected server error occurred. This is likely a temporary issue.
+    Please try again in a moment. If the problem persists, check that the
+    IBM watsonx.ai credentials in your <code style="font-family:var(--font-mono);font-size:12px;background:var(--color-surface);padding:2px 5px;border-radius:3px;">.env</code> file are correct.
+  </p>
+  <div style="display:flex;gap:var(--space-3);flex-wrap:wrap;justify-content:center;">
+    <a href="/" class="btn btn-primary">Back to Dashboard</a>
+    <a href="/settings" class="btn btn-ghost">Check Settings</a>
+  </div>
+</div>
+{% endblock %}

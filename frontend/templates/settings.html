@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block title %}Settings{% endblock %}
+
+{% block content %}
+<div class="studio-workspace-header">
+  <div class="studio-workspace-header__left">
+    <div class="studio-workspace-header__icon" style="background:rgba(255,255,255,0.08);color:#fff;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    </div>
+    <div>
+      <h1 class="studio-workspace-header__title">Workspace Preferences · System Settings</h1>
+      <p class="studio-workspace-header__desc">Configure global learning level defaults, session state, and document indexing behavior.</p>
+    </div>
+  </div>
+</div>
+
+<div class="page-body" style="max-width:560px;">
+
+  <div class="card" style="margin-bottom:var(--space-4);">
+    <div class="card-body">
+      <h4 style="margin-bottom:var(--space-4);">Learning Preferences</h4>
+
+      <div class="form-group">
+        <label class="form-label" for="setting-level">Default Learning Level</label>
+        <select class="select" id="setting-level">
+          <option value="beginner">Beginner — simple language, everyday analogies</option>
+          <option value="intermediate">Intermediate — college-level explanation</option>
+          <option value="advanced">Advanced — technical, assumes domain knowledge</option>
+        </select>
+        <div class="form-hint">This sets the default level used in simplify, chat, and all AI responses.</div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="setting-length">Response Length</label>
+        <select class="select" id="setting-length">
+          <option value="short">Short — concise answers</option>
+          <option value="medium">Medium — balanced detail</option>
+          <option value="long">Long — comprehensive explanation</option>
+        </select>
+      </div>
+
+      <div class="form-group" style="margin-bottom:0;">
+        <label class="form-label" for="setting-temperature">
+          AI Creativity (Temperature: <span id="temp-display">0.7</span>)
+        </label>
+        <input type="range" id="setting-temperature" min="0.1" max="1.0" step="0.1" value="0.7"
+               style="width:100%;accent-color:var(--color-saffron);">
+        <div class="form-hint">Lower = more precise answers. Higher = more creative responses.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:var(--space-4);">
+    <div class="card-body">
+      <h4 style="margin-bottom:var(--space-4);">Appearance</h4>
+      <div class="form-group" style="margin-bottom:0;">
+        <label class="form-label" for="setting-theme">Theme</label>
+        <select class="select" id="setting-theme">
+          <option value="light">Light</option>
+          <option value="dark">Dark (coming soon)</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:var(--space-3);">
+    <button class="btn btn-primary" id="settings-save-btn">Save Settings</button>
+    <button class="btn btn-ghost" id="settings-clear-cache-btn">Clear Response Cache</button>
+  </div>
+
+  <div id="settings-status" style="display:none;margin-top:var(--space-3);"></div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+  const levelEl  = document.getElementById("setting-level");
+  const lengthEl = document.getElementById("setting-length");
+  const tempEl   = document.getElementById("setting-temperature");
+  const tempDisp = document.getElementById("temp-display");
+  const themeEl  = document.getElementById("setting-theme");
+  const saveBtn  = document.getElementById("settings-save-btn");
+  const cacheBtn = document.getElementById("settings-clear-cache-btn");
+  const status   = document.getElementById("settings-status");
+
+  // Load current settings
+  (async () => {
+    const { data } = await window.SaralAPI.Settings.get();
+    if (!data) return;
+    if (data.learning_level) levelEl.value  = data.learning_level;
+    if (data.response_length) lengthEl.value = data.response_length;
+    if (data.temperature) { tempEl.value = data.temperature; tempDisp.textContent = data.temperature; }
+    if (data.theme) themeEl.value = data.theme;
+  })();
+
+  tempEl.addEventListener("input", () => { tempDisp.textContent = tempEl.value; });
+
+  saveBtn.addEventListener("click", async () => {
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<div class="spinner spinner-sm"></div>';
+
+    const { data, error } = await window.SaralAPI.Settings.update({
+      learning_level:  levelEl.value,
+      response_length: lengthEl.value,
+      temperature:     tempEl.value,
+      theme:           themeEl.value,
+    });
+
+    saveBtn.disabled = false;
+    saveBtn.textContent = "Save Settings";
+
+    if (error) {
+      status.className = "alert alert-error";
+      status.textContent = error;
+      status.style.display = "flex";
+    } else {
+      window.Saral.LearningLevel.set(levelEl.value);
+      window.Saral.showToast("Settings saved.", "success");
+      status.style.display = "none";
+    }
+  });
+
+  cacheBtn.addEventListener("click", async () => {
+    const { error } = await window.SaralAPI.Settings.clearCache();
+    if (error) { window.Saral.showToast(error, "error"); return; }
+    window.Saral.showToast("Response cache cleared.", "success");
+  });
+})();
+</script>
+{% endblock %}
