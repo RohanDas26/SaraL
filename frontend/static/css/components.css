@@ -371,22 +371,36 @@
 }
 .chat-bubble--assistant ol { list-style: decimal; }
 .chat-bubble--assistant li { margin-bottom: 2px; }
-.chat-bubble--assistant code {
+.chat-bubble--assistant code, .result-block__body code {
   font-family: var(--font-mono);
   font-size: 12px;
   background: var(--color-surface-2);
+  color: #0f172a;
   padding: 2px 5px;
   border-radius: var(--radius-sm);
 }
-.chat-bubble--assistant pre {
-  background: var(--color-navy);
-  color: #e2e8f0;
+.chat-bubble--assistant pre, .result-block__body pre {
+  background: #0f172a !important;
+  color: #f8fafc !important;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: var(--radius-md);
-  padding: var(--space-3) var(--space-4);
+  padding: var(--space-4);
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 13px;
+  line-height: 1.6;
   overflow-x: auto;
-  margin: var(--space-2) 0;
+  margin: var(--space-3) 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+.chat-bubble--assistant pre code, .result-block__body pre code {
+  background: transparent !important;
+  color: inherit !important;
+  padding: 0 !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  display: block;
+  white-space: pre;
 }
 .chat-bubble--assistant strong { font-weight: 600; }
 .chat-bubble--assistant em     { font-style: italic; }

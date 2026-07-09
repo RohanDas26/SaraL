@@ -195,7 +195,8 @@ p:last-child { margin-bottom: 0; }
 ::-webkit-scrollbar-thumb { background: var(--color-border-dark); border-radius: 3px; }
 
 /* ── Selection ────────────────────────────────────────────────────────── */
-::selection { background: rgba(255, 255, 255, 0.18); color: #fff; }
+::selection { background: rgba(15, 98, 254, 0.22); color: #0f172a; }
+pre ::selection, code ::selection { background: rgba(56, 189, 248, 0.35); color: #ffffff; }
 
 /* ── Focus outline ────────────────────────────────────────────────────── */
 :focus-visible {
