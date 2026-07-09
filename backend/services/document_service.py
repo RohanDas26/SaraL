@@ -136,7 +136,10 @@ def process_document(doc_id: int) -> None:
 
         # ── Step 5: embed (local, no API cost) ────────────────────────
         log.debug("Embedding %d chunks with sentence-transformers...", len(chunks))
+        import gc
+        gc.collect()  # Free PyMuPDF memory before PyTorch embedding starts
         embeddings = _embed(chunks)
+        gc.collect()  # Free embedding tensors
         _update_status(conn, doc_id, "processing", progress=80)
 
         # ── Step 6: store in ChromaDB ──────────────────────────────────
