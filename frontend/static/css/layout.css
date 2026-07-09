@@ -26,12 +26,21 @@
   z-index: 1000;
   position: relative;
   box-shadow: 0 1px 12px rgba(0, 0, 0, 0.03);
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.topnav.studio-header::-webkit-scrollbar {
+  display: none;
 }
 
 .studio-header__left {
   display: flex;
   align-items: center;
   gap: var(--space-4);
+  flex-shrink: 0;
 }
 
 .topnav__logo {
@@ -195,8 +204,12 @@
 
 /* ── Studio Workspace & Library Dock ─────────────────────────────────── */
 .workspace.studio-workspace {
-  display: flex;
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
   flex: 1;
+  width: 100%;
+  height: calc(100vh - var(--topnav-height));
   overflow: hidden;
   position: relative;
 }
