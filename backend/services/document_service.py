@@ -169,8 +169,8 @@ def process_document(doc_id: int) -> None:
         # Delete any existing vectors for this doc (re-upload scenario)
         _delete_doc_vectors(collection, doc_id)
 
-        # Batch ChromaDB add() in slices of 50 to prevent memory spikes or SQLite locks
-        batch_size = 50
+        # Batch ChromaDB add() in slices of 10 to prevent memory spikes or SQLite locks on 512MB free tier
+        batch_size = 10
         for i in range(0, len(chunks), batch_size):
             collection.add(
                 ids=chunk_ids[i:i + batch_size],
@@ -178,6 +178,7 @@ def process_document(doc_id: int) -> None:
                 documents=chunks[i:i + batch_size],
                 metadatas=chunk_metadatas[i:i + batch_size],
             )
+            import gc; gc.collect()
         log.debug("Stored %d vectors in ChromaDB", len(chunks))
         _update_status(conn, doc_id, "processing", progress=95)
 

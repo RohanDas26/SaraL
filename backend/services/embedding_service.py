@@ -45,8 +45,8 @@ def embed_texts(texts: list[str]) -> list[list[float]]:
     
     # Check if we are using ONNX DefaultEmbeddingFunction or SentenceTransformer
     if _embed_fn is not None:
-        # Batch in slices of 32 to prevent memory spikes on 512MB free cloud containers
-        batch_size = 32
+        # Ultra-small batch_size=4 to ensure peak RAM stays well under 300MB on Render's 512MB free container
+        batch_size = 4
         all_embeddings = []
         for i in range(0, len(texts), batch_size):
             batch = texts[i:i + batch_size]
@@ -54,13 +54,14 @@ def embed_texts(texts: list[str]) -> list[list[float]]:
             if hasattr(batch_emb, "tolist"):
                 batch_emb = batch_emb.tolist()
             all_embeddings.extend([list(map(float, vec)) for vec in batch_emb])
+            del batch_emb
             gc.collect()
         return all_embeddings
     else:
-        # Fallback to SentenceTransformer with ultra-small batch_size=8
+        # Fallback to SentenceTransformer with ultra-small batch_size=4
         embeddings = engine.encode(
             texts,
-            batch_size=8,
+            batch_size=4,
             show_progress_bar=False,
             convert_to_numpy=True,
             normalize_embeddings=True,
