@@ -81,8 +81,9 @@
   }
 
   async function pollUntilIndexed(docId, fileName) {
-    const maxAttempts = 60;   // 60 × 2s = 2 minutes max
+    const maxAttempts = 180;   // 180 × 2s = 6 minutes max for large PDFs and cloud container boots
     let attempts = 0;
+    let consecutiveErrors = 0;
 
     while (attempts < maxAttempts) {
       await sleep(2000);
@@ -90,10 +91,16 @@
 
       const { data, error } = await window.SaralAPI.Documents.status(docId);
       if (error) {
-        showStatus("error", `Could not check status: ${error}`);
-        return;
+        consecutiveErrors++;
+        if (consecutiveErrors > 30) {
+          showStatus("error", `Could not check status after multiple retries: ${error}. Your document may still be processing in the background.`);
+          return;
+        }
+        showStatus("loading", `⏳ Processing "${fileName}"... (waiting for server status, attempt ${consecutiveErrors})`);
+        continue;
       }
 
+      consecutiveErrors = 0;
       const s = data.status;
       const pct = data.progress_pct || 0;
 

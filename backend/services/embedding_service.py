@@ -45,14 +45,17 @@ def embed_texts(texts: list[str]) -> list[list[float]]:
     
     # Check if we are using ONNX DefaultEmbeddingFunction or SentenceTransformer
     if _embed_fn is not None:
-        # DefaultEmbeddingFunction expects list[str] and returns list[list[float]] via C++ ONNX
-        embeddings = _embed_fn(texts)
-        if hasattr(embeddings, "tolist"):
-            embeddings = embeddings.tolist()
-        # Convert to standard float lists if numpy arrays
-        res = [list(map(float, vec)) for vec in embeddings]
-        gc.collect()
-        return res
+        # Batch in slices of 32 to prevent memory spikes on 512MB free cloud containers
+        batch_size = 32
+        all_embeddings = []
+        for i in range(0, len(texts), batch_size):
+            batch = texts[i:i + batch_size]
+            batch_emb = _embed_fn(batch)
+            if hasattr(batch_emb, "tolist"):
+                batch_emb = batch_emb.tolist()
+            all_embeddings.extend([list(map(float, vec)) for vec in batch_emb])
+            gc.collect()
+        return all_embeddings
     else:
         # Fallback to SentenceTransformer with ultra-small batch_size=8
         embeddings = engine.encode(
