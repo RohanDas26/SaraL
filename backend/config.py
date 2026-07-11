@@ -49,7 +49,7 @@ class Config:
     LLM_MAX_NEW_TOKENS: int = 800
     LLM_TEMPERATURE: float = 0.7
     LLM_TOP_P: float = 0.9
-    LLM_REPETITION_PENALTY: float = 1.1
+    LLM_REPETITION_PENALTY: float = 1.3
 
     # ── RAG settings ───────────────────────────────────────────────────
     RAG_TOP_K: int = 3                     # retrieve top 3 chunks

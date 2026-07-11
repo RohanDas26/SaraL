@@ -85,7 +85,11 @@ class LLMService:
             GenParams.TEMPERATURE:        temperature    if temperature is not None else Config.LLM_TEMPERATURE,
             GenParams.TOP_P:              Config.LLM_TOP_P,
             GenParams.REPETITION_PENALTY: Config.LLM_REPETITION_PENALTY,
-            GenParams.STOP_SEQUENCES:     ["[INST]", "<|user|>", "QUESTION:"],
+            GenParams.STOP_SEQUENCES:     [
+                "[INST]", "<|user|>", "QUESTION:",
+                "The best answer is", "The correct answer is",
+                "Answer:", "\n\nQuestion:", "\n\nQ:",
+            ],
         }
 
         log.debug("LLM generate — max_tokens=%d temp=%.1f",
