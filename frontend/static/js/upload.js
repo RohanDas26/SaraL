@@ -122,8 +122,18 @@
         return;
       }
 
-      // Still processing — update progress
-      showStatus("loading", `Processing "${fileName}"... ${pct}%`);
+      // Still processing — update progress with step descriptions
+      let stageText = `Processing "${fileName}" (${pct}%)`;
+      if (pct >= 5 && pct < 30) {
+        stageText = `📄 Step 1/4: Reading document structure & extracting pages (${pct}%)`;
+      } else if (pct >= 30 && pct < 50) {
+        stageText = `🧹 Step 2/4: Cleaning & structuring text chunks for AI analysis (${pct}%)`;
+      } else if (pct >= 50 && pct < 85) {
+        stageText = `🧠 Step 3/4: Generating 384-dim AI vector embeddings locally (${pct}% — CPU processing approx 10–15s)...`;
+      } else if (pct >= 85) {
+        stageText = `⚡ Step 4/4: Indexing vector embeddings into high-speed ChromaDB database (${pct}%)...`;
+      }
+      showStatus("loading", stageText);
     }
 
     showStatus("error", "Processing timed out. The document may be too large or complex.");
@@ -134,15 +144,20 @@
   function showStatus(type, message) {
     if (!status) {
       if (type === "error" || type === "success" || message.startsWith("Uploading")) {
-        window.Saral?.showToast(message, type === "loading" ? "info" : type);
+        window.Saral?.showToast(message, type === "loading" ? "info" : type, type === "loading" ? 4000 : 5000);
       }
       return;
     }
     const cls = type === "loading" ? "info" : type;
     status.className = `alert alert-${cls}`;
     status.style.display = "flex";
+    status.style.alignItems = "center";
+    status.style.padding = "14px 16px";
+    status.style.borderLeft = type === "loading" ? "4px solid #0f62fe" : type === "success" ? "4px solid #10b981" : "4px solid #ef4444";
     status.innerHTML = type === "loading"
-      ? `<div class="spinner spinner-sm"></div><span style="margin-left:8px">${message}</span>`
-      : message;
+      ? `<div class="spinner spinner-sm" style="flex-shrink:0;width:18px;height:18px;margin-right:12px;"></div>` +
+        `<div style="flex:1;"><div style="font-weight:600;font-size:13px;color:#111827;">AI Document Ingestion in Progress</div>` +
+        `<div style="font-size:12px;color:#4b5563;margin-top:2px;">${message}</div></div>`
+      : `<div style="font-weight:600;font-size:13px;">${message}</div>`;
   }
 })();

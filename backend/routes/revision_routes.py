@@ -75,61 +75,76 @@ def generate_revision():
 
 def _normalize_flashcards(raw: str, result: list | None) -> list | None:
     """
-    Ensure every flashcard has 'front' and 'back' keys, even if the model
-    used 'question'/'answer' or 'term'/'definition'. If JSON parsing failed entirely,
-    extract cards via regex from markdown bullet points or Q&A format.
+    Ensure every flashcard has 'front' and 'back' keys, regardless of whatever
+    custom keys the LLM invented ('question', 'term', 'card_front', 'concept', etc.),
+    or fall back to taking the first/last values of any dictionary, or extracting via regex from text.
     """
     normalized = []
     if isinstance(result, list) and len(result) > 0:
         for item in result:
-            if isinstance(item, dict):
+            if isinstance(item, dict) and item:
+                # 1. Check known key variations
                 front = (
-                    item.get("front")
-                    or item.get("Front")
-                    or item.get("question")
-                    or item.get("Question")
-                    or item.get("term")
-                    or item.get("Term")
-                    or item.get("q")
-                    or item.get("Q")
-                    or ""
+                    item.get("front") or item.get("Front") or
+                    item.get("question") or item.get("Question") or
+                    item.get("term") or item.get("Term") or
+                    item.get("card_front") or item.get("cardFront") or
+                    item.get("term_or_question") or item.get("concept") or
+                    item.get("title") or item.get("word") or item.get("q") or item.get("Q") or ""
                 )
                 back = (
-                    item.get("back")
-                    or item.get("Back")
-                    or item.get("answer")
-                    or item.get("Answer")
-                    or item.get("definition")
-                    or item.get("Definition")
-                    or item.get("a")
-                    or item.get("A")
-                    or ""
+                    item.get("back") or item.get("Back") or
+                    item.get("answer") or item.get("Answer") or
+                    item.get("definition") or item.get("Definition") or
+                    item.get("card_back") or item.get("cardBack") or
+                    item.get("definition_or_answer") or item.get("explanation") or
+                    item.get("description") or item.get("meaning") or item.get("a") or item.get("A") or ""
                 )
-                if front or back:
+                # 2. If known keys missed, take positional values of the dict
+                if not front or not back:
+                    vals = [str(v).strip() for v in item.values() if v and str(v).strip()]
+                    if len(vals) >= 2:
+                        front = front or vals[0]
+                        back = back or vals[1]
+                    elif len(vals) == 1 and len(item.keys()) == 1:
+                        # e.g. {"Laser": "Light amplification by..."}
+                        k = list(item.keys())[0]
+                        front = front or str(k).strip()
+                        back = back or vals[0]
+
+                if front and back:
                     normalized.append({"front": str(front).strip(), "back": str(back).strip()})
         if normalized:
             return normalized
 
-    # Fallback: Regex/Line extraction from raw text if JSON array failed or was empty
+    # Fallback: Smart Regex / Line extraction from raw text if JSON array failed
     lines = [l.strip() for l in raw.splitlines() if l.strip()]
     curr_front = ""
     curr_back = ""
     for line in lines:
-        if line.lower().startswith(("front:", "q:", "question:", "term:")):
+        clean_line = re.sub(r'^[0-9]+\.[\s]*|^[\*\-•]+[\s]*', '', line).strip()
+        if clean_line.lower().startswith(("front:", "q:", "question:", "term:", "card front:")):
             if curr_front and curr_back:
                 normalized.append({"front": curr_front, "back": curr_back})
                 curr_back = ""
-            curr_front = re.sub(r'^(?:front|q|question|term)\s*:\s*', '', line, flags=re.I).strip()
-        elif line.lower().startswith(("back:", "a:", "answer:", "definition:")):
-            curr_back = re.sub(r'^(?:back|a|answer|definition)\s*:\s*', '', line, flags=re.I).strip()
+            curr_front = re.sub(r'^(?:card front|front|question|term|q)\s*:\s*', '', clean_line, flags=re.I).strip()
+        elif clean_line.lower().startswith(("back:", "a:", "answer:", "definition:", "card back:")):
+            curr_back = re.sub(r'^(?:card back|back|answer|definition|a)\s*:\s*', '', clean_line, flags=re.I).strip()
             if curr_front and curr_back:
                 normalized.append({"front": curr_front, "back": curr_back})
                 curr_front = ""
                 curr_back = ""
-        elif "-" in line and not curr_front:
-            parts = line.lstrip("-•*0123456789. ").split(":", 1)
-            if len(parts) == 2 and parts[0].strip() and parts[1].strip():
+        elif ":" in clean_line and not clean_line.startswith("http") and len(clean_line) < 300:
+            parts = clean_line.split(":", 1)
+            if len(parts) == 2 and len(parts[0].strip()) > 1 and len(parts[1].strip()) > 3:
                 normalized.append({"front": parts[0].strip(), "back": parts[1].strip()})
+        elif ("-" in clean_line or "–" in clean_line or "—" in clean_line) and not curr_front:
+            for sep in [" - ", " – ", " — ", "-"]:
+                if sep in clean_line:
+                    parts = clean_line.split(sep, 1)
+                    if len(parts) == 2 and len(parts[0].strip()) > 1 and len(parts[1].strip()) > 3:
+                        normalized.append({"front": parts[0].strip(), "back": parts[1].strip()})
+                    break
 
     return normalized if normalized else None
 

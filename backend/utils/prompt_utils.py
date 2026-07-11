@@ -274,9 +274,9 @@ REVISION_PROMPTS = {
 {system}
 
 Create {count} flashcards from the following study material.
-Each flashcard should have a clear FRONT (term or question) and BACK (answer or definition).
+Each flashcard MUST have exact lowercase JSON keys "front" (the term or question) and "back" (the definition or answer).
 
-Return ONLY a valid JSON array:
+Return ONLY a valid JSON array matching this exact schema:
 [
   {{
     "front": "term or question",

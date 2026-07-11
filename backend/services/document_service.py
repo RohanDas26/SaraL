@@ -148,7 +148,7 @@ def process_document(doc_id: int) -> None:
         import gc
         gc.collect()  # Free PyMuPDF memory before embedding starts
         from backend.services.embedding_service import embed_texts
-        embeddings = embed_texts(chunks)
+        embeddings = embed_texts(chunks, progress_callback=lambda p: _update_status(conn, doc_id, "processing", progress=int(55 + (p * 25))))
         gc.collect()
         _update_status(conn, doc_id, "processing", progress=80)
 

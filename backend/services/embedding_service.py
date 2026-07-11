@@ -58,35 +58,42 @@ def unload_embedding_engine() -> None:
     log.info("Embedding engine unloaded. RAM freed.")
 
 
-def embed_texts(texts: list[str]) -> list[list[float]]:
+def embed_texts(texts: list[str], progress_callback: Optional[Any] = None) -> list[list[float]]:
     engine = get_embedding_engine()
     log.debug("Starting encoding of %d texts...", len(texts))
     
-    # Check if we are using ONNX DefaultEmbeddingFunction or SentenceTransformer
+    batch_size = 16
+    all_embeddings = []
+    total = len(texts)
+    
     if _embed_fn is not None:
-        # Ultra-small batch_size=4 to ensure peak RAM stays well under 300MB on Render's 512MB free container
-        batch_size = 4
-        all_embeddings = []
-        for i in range(0, len(texts), batch_size):
+        for i in range(0, total, batch_size):
             batch = texts[i:i + batch_size]
             batch_emb = _embed_fn(batch)
             if hasattr(batch_emb, "tolist"):
                 batch_emb = batch_emb.tolist()
             all_embeddings.extend([list(map(float, vec)) for vec in batch_emb])
             del batch_emb
-            gc.collect()
+            if progress_callback and total > 0:
+                progress_callback(min(1.0, (i + len(batch)) / total))
+        gc.collect()
         return all_embeddings
     else:
-        # Fallback to SentenceTransformer with ultra-small batch_size=4
-        embeddings = engine.encode(
-            texts,
-            batch_size=4,
-            show_progress_bar=False,
-            convert_to_numpy=True,
-            normalize_embeddings=True,
-        )
+        for i in range(0, total, batch_size):
+            batch = texts[i:i + batch_size]
+            batch_emb = engine.encode(
+                batch,
+                batch_size=batch_size,
+                show_progress_bar=False,
+                convert_to_numpy=True,
+                normalize_embeddings=True,
+            )
+            all_embeddings.extend(batch_emb.tolist())
+            del batch_emb
+            if progress_callback and total > 0:
+                progress_callback(min(1.0, (i + len(batch)) / total))
         gc.collect()
-        return embeddings.tolist()
+        return all_embeddings
 
 
 def embed_query(query: str) -> list[float]:
