@@ -56,14 +56,14 @@ def generate_quiz():
     context, _ = retrieve_context(
         f"generate {quiz_type} questions",
         doc_ids=[int(doc_id)],
-        top_k=6,
+        top_k=15,
     )
     if not context:
         return jsonify({"error": "No content found for this document."}), 404
 
     prompt = build_quiz_prompt(context, quiz_type, count, difficulty)
     try:
-        raw = get_llm().generate(prompt, max_new_tokens=2000)
+        raw = get_llm().generate(prompt, max_new_tokens=3000)
     except RuntimeError as e:
         return jsonify({"error": str(e)}), 503
 

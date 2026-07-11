@@ -48,14 +48,14 @@ def generate_revision():
     context, _ = retrieve_context(
         "revision study material key concepts",
         doc_ids=[int(doc_id)],
-        top_k=8,
+        top_k=15,
     )
     if not context:
         return jsonify({"error": "No content found for this document."}), 404
 
     prompt = build_revision_prompt(context, rev_type, count)
     try:
-        raw = get_llm().generate(prompt, max_new_tokens=2000)
+        raw = get_llm().generate(prompt, max_new_tokens=3000)
     except RuntimeError as e:
         return jsonify({"error": str(e)}), 503
 

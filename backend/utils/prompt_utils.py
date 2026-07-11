@@ -153,6 +153,8 @@ QUIZ_PROMPTS = {
 Generate exactly {count} multiple-choice questions from the study material below.
 Difficulty: {difficulty}.
 
+CRITICAL INSTRUCTION: You MUST generate EXACTLY {count} distinct questions. Do not generate fewer than {count}. Your JSON array must contain exactly {count} items.
+
 Return ONLY a valid JSON array. No extra text before or after. Use this exact schema:
 [
   {{
@@ -176,6 +178,8 @@ JSON:""",
 Generate exactly {count} true/false questions from the study material below.
 Difficulty: {difficulty}.
 
+CRITICAL INSTRUCTION: You MUST generate EXACTLY {count} distinct questions. Do not generate fewer than {count}. Your JSON array must contain exactly {count} items.
+
 Return ONLY a valid JSON array:
 [
   {{
@@ -198,6 +202,8 @@ JSON:""",
 Generate exactly {count} short-answer questions from the study material below.
 Difficulty: {difficulty}. Each answer should be 1–3 sentences.
 
+CRITICAL INSTRUCTION: You MUST generate EXACTLY {count} distinct questions. Do not generate fewer than {count}. Your JSON array must contain exactly {count} items.
+
 Return ONLY a valid JSON array:
 [
   {{
@@ -219,6 +225,8 @@ JSON:""",
 Generate exactly {count} long-answer / essay questions from the study material below.
 Difficulty: {difficulty}. Each answer should be a full paragraph.
 
+CRITICAL INSTRUCTION: You MUST generate EXACTLY {count} distinct questions. Do not generate fewer than {count}. Your JSON array must contain exactly {count} items.
+
 Return ONLY a valid JSON array:
 [
   {{
@@ -234,6 +242,7 @@ STUDY MATERIAL:
 
 JSON:""",
 }
+
 
 
 # ── Explain Term ──────────────────────────────────────────────────────
