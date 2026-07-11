@@ -2,6 +2,7 @@
 routes/revision_routes.py
 """
 import json
+import re
 from flask import Blueprint, request, jsonify
 from backend.extensions import limiter
 from backend.config import Config
@@ -43,6 +44,8 @@ def generate_revision():
     cached = get_cached(cache_key, doc_id)
     if cached:
         payload = json.loads(cached) if rev_type == "flashcards" else cached
+        if rev_type == "flashcards":
+            payload = _normalize_flashcards("", payload) or payload
         return jsonify({"result": payload, "cached": True}), 200
 
     context, _ = retrieve_context(
@@ -60,7 +63,7 @@ def generate_revision():
         return jsonify({"error": str(e)}), 503
 
     if rev_type == "flashcards":
-        result = parse_llm_json_array(raw)
+        result = _normalize_flashcards(raw, parse_llm_json_array(raw))
         if not result:
             return jsonify({"error": "Could not parse flashcards from AI response."}), 500
         set_cached(cache_key, doc_id, json.dumps(result))
@@ -68,6 +71,67 @@ def generate_revision():
     else:
         set_cached(cache_key, doc_id, raw)
         return jsonify({"result": raw, "cached": False}), 200
+
+
+def _normalize_flashcards(raw: str, result: list | None) -> list | None:
+    """
+    Ensure every flashcard has 'front' and 'back' keys, even if the model
+    used 'question'/'answer' or 'term'/'definition'. If JSON parsing failed entirely,
+    extract cards via regex from markdown bullet points or Q&A format.
+    """
+    normalized = []
+    if isinstance(result, list) and len(result) > 0:
+        for item in result:
+            if isinstance(item, dict):
+                front = (
+                    item.get("front")
+                    or item.get("Front")
+                    or item.get("question")
+                    or item.get("Question")
+                    or item.get("term")
+                    or item.get("Term")
+                    or item.get("q")
+                    or item.get("Q")
+                    or ""
+                )
+                back = (
+                    item.get("back")
+                    or item.get("Back")
+                    or item.get("answer")
+                    or item.get("Answer")
+                    or item.get("definition")
+                    or item.get("Definition")
+                    or item.get("a")
+                    or item.get("A")
+                    or ""
+                )
+                if front or back:
+                    normalized.append({"front": str(front).strip(), "back": str(back).strip()})
+        if normalized:
+            return normalized
+
+    # Fallback: Regex/Line extraction from raw text if JSON array failed or was empty
+    lines = [l.strip() for l in raw.splitlines() if l.strip()]
+    curr_front = ""
+    curr_back = ""
+    for line in lines:
+        if line.lower().startswith(("front:", "q:", "question:", "term:")):
+            if curr_front and curr_back:
+                normalized.append({"front": curr_front, "back": curr_back})
+                curr_back = ""
+            curr_front = re.sub(r'^(?:front|q|question|term)\s*:\s*', '', line, flags=re.I).strip()
+        elif line.lower().startswith(("back:", "a:", "answer:", "definition:")):
+            curr_back = re.sub(r'^(?:back|a|answer|definition)\s*:\s*', '', line, flags=re.I).strip()
+            if curr_front and curr_back:
+                normalized.append({"front": curr_front, "back": curr_back})
+                curr_front = ""
+                curr_back = ""
+        elif "-" in line and not curr_front:
+            parts = line.lstrip("-•*0123456789. ").split(":", 1)
+            if len(parts) == 2 and parts[0].strip() and parts[1].strip():
+                normalized.append({"front": parts[0].strip(), "back": parts[1].strip()})
+
+    return normalized if normalized else None
 
 
 @revision_bp.route("/important-points", methods=["POST"])

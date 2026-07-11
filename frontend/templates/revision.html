@@ -192,10 +192,14 @@
 
   // ── Flashcard navigation ──────────────────────────────────────────
   function renderFlashcard() {
-    if (!cards.length) return;
-    const c = cards[cardIdx];
-    fcFront.textContent  = c.front;
-    fcBack.textContent   = c.back;
+    if (!cards || !cards.length) return;
+    const c = cards[cardIdx] || {};
+    const frontText = c.front || c.question || c.term || c.Front || c.Question || "—";
+    const backText  = c.back || c.answer || c.definition || c.Back || c.Answer || "—";
+    fcFront.textContent   = frontText;
+    fcFront.style.overflowY = "auto";
+    fcBack.textContent    = backText;
+    fcBack.style.overflowY  = "auto";
     fcCounter.textContent = `Card ${cardIdx + 1} of ${cards.length}`;
     fcCard.classList.remove("flipped");
   }
