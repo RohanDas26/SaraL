@@ -147,10 +147,8 @@ def process_document(doc_id: int) -> None:
         log.debug("Embedding %d chunks with sentence-transformers...", len(chunks))
         import gc
         gc.collect()  # Free PyMuPDF memory before embedding starts
-        from backend.services.embedding_service import embed_texts, unload_embedding_engine
+        from backend.services.embedding_service import embed_texts
         embeddings = embed_texts(chunks)
-        # Immediately unload ONNX from RAM — frees 150-200MB on 512MB container
-        unload_embedding_engine()
         gc.collect()
         _update_status(conn, doc_id, "processing", progress=80)
 
