@@ -55,8 +55,8 @@
       showStatus("error", "Unsupported file type. Please upload a PDF, DOCX, or TXT file.");
       return;
     }
-    if (file.size > 25 * 1024 * 1024) {
-      showStatus("error", "File exceeds the 25 MB upload limit.");
+    if (file.size > 5 * 1024 * 1024) {
+      showStatus("error", "File exceeds the 5 MB upload limit.");
       return;
     }
 

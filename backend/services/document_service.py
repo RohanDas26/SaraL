@@ -131,8 +131,17 @@ def process_document(doc_id: int) -> None:
                 "It may contain only images or formatting."
             )
 
+        # Hard cap: prevent OOM on 512MB free-tier containers
+        if len(chunks) > Config.MAX_CHUNKS:
+            log.warning(
+                "Document produced %d chunks — capping to %d to prevent OOM on cloud container",
+                len(chunks), Config.MAX_CHUNKS,
+            )
+            chunks = chunks[:Config.MAX_CHUNKS]
+
         log.info("Chunked into %d chunks", len(chunks))
         _update_status(conn, doc_id, "processing", progress=55)
+
 
         # ── Step 5: embed (local, no API cost) ────────────────────────
         log.debug("Embedding %d chunks with sentence-transformers...", len(chunks))

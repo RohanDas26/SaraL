@@ -26,7 +26,7 @@ class Config:
     # ── File upload ────────────────────────────────────────────────────
     # MAX_UPLOAD_SIZE_MB is the canonical env var (MB is human-readable).
     # MAX_UPLOAD_BYTES is kept as a fallback for backward compatibility.
-    _upload_mb: int = int(os.environ.get("MAX_UPLOAD_SIZE_MB", os.environ.get("MAX_UPLOAD_BYTES_FALLBACK", "25")))
+    _upload_mb: int = int(os.environ.get("MAX_UPLOAD_SIZE_MB", os.environ.get("MAX_UPLOAD_BYTES_FALLBACK", "5")))
     MAX_CONTENT_LENGTH: int = _upload_mb * 1024 * 1024
     ALLOWED_EXTENSIONS: set = {"pdf", "docx", "txt"}
     # Store uploads in project_root/uploads/ — outside the static directory
@@ -53,8 +53,9 @@ class Config:
 
     # ── RAG settings ───────────────────────────────────────────────────
     RAG_TOP_K: int = 3                     # retrieve top 3 chunks
-    CHUNK_SIZE: int = 512                  # characters per chunk (≈ 128 tokens)
-    CHUNK_OVERLAP: int = 64               # character overlap between chunks
+    CHUNK_SIZE: int = 300                  # characters per chunk — smaller = fewer chunks = less RAM
+    CHUNK_OVERLAP: int = 40               # character overlap between chunks
+    MAX_CHUNKS: int = 40                   # hard cap — prevents OOM on large documents on 512MB free tier
 
     # ── Rate limiting ──────────────────────────────────────────────────
     RATE_LIMIT_PER_MINUTE: str = os.environ.get("RATE_LIMIT_PER_MINUTE", "5")
