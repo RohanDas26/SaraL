@@ -39,6 +39,25 @@ def get_embedding_engine() -> Any:
     return _embed_fn if _embed_fn is not None else _model
 
 
+def unload_embedding_engine() -> None:
+    """
+    Explicitly destroy the ONNX / SentenceTransformer model singleton and
+    force garbage collection.  Call this immediately after document ingestion
+    completes to free 150-200 MB of RAM on Render's 512 MB free-tier container.
+    """
+    global _embed_fn, _model
+    if _embed_fn is not None:
+        log.info("Unloading ONNX embedding engine to free RAM...")
+        del _embed_fn
+        _embed_fn = None
+    if _model is not None:
+        log.info("Unloading SentenceTransformer model to free RAM...")
+        del _model
+        _model = None
+    gc.collect()
+    log.info("Embedding engine unloaded. RAM freed.")
+
+
 def embed_texts(texts: list[str]) -> list[list[float]]:
     engine = get_embedding_engine()
     log.debug("Starting encoding of %d texts...", len(texts))
