@@ -30,9 +30,6 @@
         <span class="topnav__logo-text">Saral</span>
         <span class="topnav__logo-tag">Making Learning Simpler</span>
       </a>
-      <button class="sidebar-collapse-toggle" id="sidebar-collapse-btn" title="Toggle Knowledge Dock">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
-      </button>
     </div>
 
     <!-- Center Studio Workflow Dock (Classy minimal text, no emojis) -->
@@ -75,7 +72,6 @@
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--color-saffron)"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
           <span>Knowledge Base</span>
         </div>
-        <button class="btn-icon-tiny" id="library-minimize-btn" title="Hide Library Drawer">◀</button>
       </div>
 
       <div class="library-dock__active-status">
@@ -147,6 +143,7 @@
 <!-- Scripts — utils and api must be first -->
 <script src="{{ url_for('static', filename='js/utils.js') }}"></script>
 <script src="{{ url_for('static', filename='js/api.js') }}"></script>
+<script src="{{ url_for('static', filename='js/upload.js') }}"></script>
 {% block extra_js %}{% endblock %}
 
 <script>

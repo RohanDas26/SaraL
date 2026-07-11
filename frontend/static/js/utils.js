@@ -29,6 +29,32 @@ const ActiveDoc = {
   },
   set(doc) {
     localStorage.setItem("saral_active_doc", JSON.stringify(doc));
+    const display = document.getElementById("active-doc-display");
+    if (display && doc) display.textContent = doc.display_name;
+    document.querySelectorAll(".sidebar__item").forEach(el => {
+      if (doc && String(el.dataset.docId) === String(doc.id)) {
+        el.classList.add("active");
+      } else {
+        el.classList.remove("active");
+      }
+    });
+    const selIds = ["quiz-doc-select", "revision-doc-select", "simplify-doc-select", "summary-doc-select", "terms-doc-select"];
+    selIds.forEach(id => {
+      const sel = document.getElementById(id);
+      if (sel && doc) {
+        let found = false;
+        for (let i = 0; i < sel.options.length; i++) {
+          if (String(sel.options[i].value) === String(doc.id)) {
+            found = true;
+            break;
+          }
+        }
+        if (!found) {
+          sel.appendChild(new Option(doc.display_name, doc.id));
+        }
+        sel.value = doc.id;
+      }
+    });
   },
   clear() {
     localStorage.removeItem("saral_active_doc");
