@@ -86,9 +86,9 @@ class LLMService:
             GenParams.TOP_P:              Config.LLM_TOP_P,
             GenParams.REPETITION_PENALTY: Config.LLM_REPETITION_PENALTY,
             GenParams.STOP_SEQUENCES:     [
-                "[INST]", "<|user|>", "QUESTION:",
+                "[INST]", "<|user|>",
                 "The best answer is", "The correct answer is",
-                "Answer:", "\n\nQuestion:", "\n\nQ:",
+                "\n\nQuestion:", "QUESTION:",
             ],
         }
 
