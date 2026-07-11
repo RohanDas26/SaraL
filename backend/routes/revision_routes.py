@@ -10,6 +10,7 @@ from backend.services.rag_service import retrieve_context
 from backend.services.document_service import get_document
 from backend.services.cache_service import get_cached, set_cached
 from backend.utils.prompt_utils import build_revision_prompt, build_important_points_prompt
+from backend.utils.json_utils import parse_llm_json_array
 
 revision_bp = Blueprint("revision", __name__, url_prefix="/api/revision")
 _RATE = f"{Config.RATE_LIMIT_PER_MINUTE} per minute;{Config.RATE_LIMIT_PER_DAY} per day"
@@ -54,12 +55,12 @@ def generate_revision():
 
     prompt = build_revision_prompt(context, rev_type, count)
     try:
-        raw = get_llm().generate(prompt, max_new_tokens=1200)
+        raw = get_llm().generate(prompt, max_new_tokens=2000)
     except RuntimeError as e:
         return jsonify({"error": str(e)}), 503
 
     if rev_type == "flashcards":
-        result = _parse_flashcard_json(raw)
+        result = parse_llm_json_array(raw)
         if not result:
             return jsonify({"error": "Could not parse flashcards from AI response."}), 500
         set_cached(cache_key, doc_id, json.dumps(result))
@@ -100,21 +101,9 @@ def important_points():
 
     prompt = build_important_points_prompt(context)
     try:
-        result = get_llm().generate(prompt, max_new_tokens=1000)
+        result = get_llm().generate(prompt, max_new_tokens=1500)
     except RuntimeError as e:
         return jsonify({"error": str(e)}), 503
 
     set_cached("important_points", doc_id, result)
     return jsonify({"result": result, "cached": False}), 200
-
-
-def _parse_flashcard_json(raw: str) -> list | None:
-    raw = raw.strip()
-    start = raw.find("[")
-    end   = raw.rfind("]")
-    if start == -1 or end == -1:
-        return None
-    try:
-        return json.loads(raw[start:end + 1])
-    except json.JSONDecodeError:
-        return None

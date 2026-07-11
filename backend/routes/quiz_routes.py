@@ -10,6 +10,7 @@ from backend.services.rag_service import retrieve_context
 from backend.services.document_service import get_document
 from backend.services.cache_service import get_cached, set_cached
 from backend.utils.prompt_utils import build_quiz_prompt
+from backend.utils.json_utils import parse_llm_json_array
 
 quiz_bp = Blueprint("quiz", __name__, url_prefix="/api/quiz")
 _RATE = f"{Config.RATE_LIMIT_PER_MINUTE} per minute;{Config.RATE_LIMIT_PER_DAY} per day"
@@ -62,32 +63,14 @@ def generate_quiz():
 
     prompt = build_quiz_prompt(context, quiz_type, count, difficulty)
     try:
-        raw = get_llm().generate(prompt, max_new_tokens=1200)
+        raw = get_llm().generate(prompt, max_new_tokens=2000)
     except RuntimeError as e:
         return jsonify({"error": str(e)}), 503
 
     # Parse JSON output from the model
-    questions = _parse_quiz_json(raw)
+    questions = parse_llm_json_array(raw)
     if not questions:
         return jsonify({"error": "Could not parse quiz from AI response. Please try again."}), 500
 
     set_cached(cache_key, doc_id, json.dumps(questions))
     return jsonify({"questions": questions, "cached": False}), 200
-
-
-def _parse_quiz_json(raw: str) -> list | None:
-    """
-    Extract the JSON array from the model's raw text output.
-    The model is instructed to return only JSON, but may include
-    preamble text — this function strips it.
-    """
-    raw = raw.strip()
-    # Find the first '[' and last ']'
-    start = raw.find("[")
-    end   = raw.rfind("]")
-    if start == -1 or end == -1:
-        return None
-    try:
-        return json.loads(raw[start:end + 1])
-    except json.JSONDecodeError:
-        return None
