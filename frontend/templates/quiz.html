@@ -54,9 +54,13 @@
     <div style="display:flex;gap:var(--space-4);align-items:flex-end;margin-bottom:var(--space-5);">
       <div class="form-group" style="margin:0;">
         <label class="form-label" for="quiz-count">Number of Questions</label>
-        <input class="input" type="number" id="quiz-count" min="1" max="20" value="5" style="width:100px;">
+        <div style="display:flex;align-items:center;gap:6px;">
+          <button type="button" class="btn btn-secondary btn-sm" id="quiz-count-minus" style="padding:8px 12px;font-weight:bold;font-size:16px;line-height:1;">−</button>
+          <input class="input" type="number" id="quiz-count" min="1" max="20" value="5" style="width:70px;text-align:center;font-weight:bold;padding:10px 8px;">
+          <button type="button" class="btn btn-secondary btn-sm" id="quiz-count-plus" style="padding:8px 12px;font-weight:bold;font-size:16px;line-height:1;">+</button>
+        </div>
       </div>
-      <button class="btn btn-primary" id="quiz-generate-btn">Generate Quiz</button>
+      <button class="btn btn-primary" id="quiz-generate-btn" style="height:40px;">Generate Quiz</button>
     </div>
   </div>
 

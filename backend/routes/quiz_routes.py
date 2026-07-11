@@ -2,6 +2,8 @@
 routes/quiz_routes.py
 """
 import json
+import random
+import re
 from flask import Blueprint, request, jsonify
 from backend.extensions import limiter
 from backend.config import Config
@@ -72,5 +74,63 @@ def generate_quiz():
     if not questions:
         return jsonify({"error": "Could not parse quiz from AI response. Please try again."}), 500
 
+    # Shuffle MCQ options so the correct answer is randomly distributed across A/B/C/D
+    questions = _shuffle_mcq_options(questions)
+
     set_cached(cache_key, doc_id, json.dumps(questions))
     return jsonify({"questions": questions, "cached": False}), 200
+
+
+def _shuffle_mcq_options(questions: list) -> list:
+    """
+    Randomize option positions across A/B/C/D so that the correct option is not
+    always placed in the same position (e.g. D) by the LLM.
+    """
+    for q in questions:
+        if isinstance(q, dict) and "options" in q and isinstance(q["options"], list) and len(q["options"]) > 1:
+            options = q["options"]
+            answer = str(q.get("answer", "")).strip()
+
+            # Find the option index that currently matches 'answer'
+            correct_idx = -1
+            for idx, opt in enumerate(options):
+                opt_str = str(opt).strip()
+                if opt_str == answer:
+                    correct_idx = idx
+                    break
+                # Check match after stripping letter prefix (A) , B) , etc.)
+                clean_opt = re.sub(r'^[A-Ea-e][\.\)\:]\s*', '', opt_str).strip()
+                clean_ans = re.sub(r'^[A-Ea-e][\.\)\:]\s*', '', answer).strip()
+                if clean_opt and clean_opt == clean_ans:
+                    correct_idx = idx
+                    break
+
+            if correct_idx != -1:
+                # Strip prefixes from all options to get raw option strings
+                raw_options = [re.sub(r'^[A-Ea-e][\.\)\:]\s*', '', str(o)).strip() for o in options]
+                correct_raw = raw_options[correct_idx]
+
+                # Don't shuffle if options contain positional phrases like "all of the above"
+                has_special = any(
+                    "all of the above" in o.lower()
+                    or "none of the above" in o.lower()
+                    or "both " in o.lower()
+                    for o in raw_options
+                )
+                if not has_special:
+                    random.shuffle(raw_options)
+
+                # Reassign A) , B) , C) , D) prefixes
+                letters = ["A) ", "B) ", "C) ", "D) ", "E) "]
+                new_options = []
+                new_answer = answer
+                for idx, r_opt in enumerate(raw_options):
+                    prefix = letters[idx] if idx < len(letters) else f"{idx+1}) "
+                    new_options.append(prefix + r_opt)
+                    if r_opt == correct_raw:
+                        new_answer = prefix + r_opt
+
+                q["options"] = new_options
+                q["answer"] = new_answer
+    return questions
+

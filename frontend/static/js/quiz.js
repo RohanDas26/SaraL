@@ -7,6 +7,8 @@
   const typeSelect   = document.getElementById("quiz-type-select");
   const diffSelect   = document.getElementById("quiz-difficulty-select");
   const countInput   = document.getElementById("quiz-count");
+  const countMinus   = document.getElementById("quiz-count-minus");
+  const countPlus    = document.getElementById("quiz-count-plus");
   const generateBtn  = document.getElementById("quiz-generate-btn");
   const quizArea     = document.getElementById("quiz-area");
   const quizConfig   = document.getElementById("quiz-config");
@@ -23,6 +25,19 @@
   const restartBtn   = document.getElementById("quiz-restart-btn");
 
   if (!generateBtn) return;
+
+  if (countMinus && countInput) {
+    countMinus.addEventListener("click", () => {
+      let val = parseInt(countInput.value) || 5;
+      if (val > 1) countInput.value = val - 1;
+    });
+  }
+  if (countPlus && countInput) {
+    countPlus.addEventListener("click", () => {
+      let val = parseInt(countInput.value) || 5;
+      if (val < 20) countInput.value = val + 1;
+    });
+  }
 
   let questions   = [];
   let currentIdx  = 0;
